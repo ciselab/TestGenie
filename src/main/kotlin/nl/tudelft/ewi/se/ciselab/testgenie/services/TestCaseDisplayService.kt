@@ -8,7 +8,11 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBScrollPane
 import java.awt.BorderLayout
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.Box
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JPanel
 
 class TestCaseDisplayService(private val project: Project) {
 
@@ -39,8 +43,7 @@ class TestCaseDisplayService(private val project: Project) {
             checkbox.isSelected = true
             testCasePanel.add(checkbox, BorderLayout.WEST)
 
-            val code = JavaCodeFragmentFactory.getInstance(project)
-                .createExpressionCodeFragment(it, null, null, true)
+            val code = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(it, null, null, true)
             val document = PsiDocumentManager.getInstance(project).getDocument(code)
             val editor = EditorTextField(document, project, JavaFileType.INSTANCE)
 
