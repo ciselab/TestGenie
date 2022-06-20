@@ -169,7 +169,6 @@ class Pipeline(
             .run(object : Task.Backgroundable(project, TestGenieBundle.message("evosuiteTestGenerationMessage")) {
                 override fun run(indicator: ProgressIndicator) {
                     try {
-                        projectBuilder.runBuild(indicator)
                         if (!skipCache) {
                             // Check cache
                             val hasCachedTests = tryShowCachedTestCases()
@@ -185,6 +184,8 @@ class Pipeline(
                             return
                         }
 
+                        projectBuilder.runBuild(indicator)
+
                         runEvoSuite(indicator)
                         indicator.stop()
                     } catch (e: Exception) {
@@ -194,11 +195,15 @@ class Pipeline(
                         // Revert to previous state
                         val runnerService = project.service<RunnerService>()
                         runnerService.isRunning = false
+                        val testCaseDisplayService = project.service<TestCaseDisplayService>()
+                        testCaseDisplayService.validateButton.isEnabled = true
                     }
                 }
             })
+        val testCaseDisplayService = project.service<TestCaseDisplayService>()
+        testCaseDisplayService.fileUrl = fileUrl
+        testCaseDisplayService.toggleJacocoButton.isEnabled = false
 
-        project.service<TestCaseDisplayService>().fileUrl = fileUrl
         return testResultName
     }
 
@@ -216,6 +221,9 @@ class Pipeline(
             return false
         }
 
+        // retrieve the job of an arbitrary valid test case
+        val testJobInfo = cache.getTestJobInfo(fileUrl, testCases[0].testCode)
+
         val workspace = project.service<Workspace>()
         ApplicationManager.getApplication().invokeLater {
             val report = CompactReport(TestGenerationResultImpl())
@@ -227,7 +235,7 @@ class Pipeline(
             report.testCaseList = testMap
             report.allCoveredLines = testCases.map { it.coveredLines }.flatten().toSet()
 
-            workspace.receiveGenerationResult(testResultName, report, this)
+            workspace.receiveGenerationResult(testResultName, report, this, testJobInfo)
         }
 
         return true

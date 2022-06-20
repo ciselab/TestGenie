@@ -79,7 +79,7 @@ class CoverageRenderer(
         }
 
         if (notCoveredMutation.isNotEmpty() && state.criterionWeakMutation) {
-            prePanel.addComponent(JBLabel(" Not killed mutants:"), 10)
+            prePanel.addComponent(JBLabel(" Survived mutants:"), 10)
             for (mutantName in notCoveredMutation) {
                 prePanel.addComponent(
                     JBLabel(mutantName.substringBefore('('))
@@ -153,7 +153,7 @@ class CoverageRenderer(
      * @param r rectangle object
      */
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
-        g.fillRect(r.x, r.y, r.width, r.height)
+        g.fillRect(r.x, r.y, r.width * 3 / 2, r.height * 5 / 6)
         g.color = color
     }
 
