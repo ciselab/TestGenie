@@ -27,6 +27,7 @@ version = properties("pluginVersion")
 repositories {
     mavenCentral()
     maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public")
 }
 
 dependencies {
@@ -71,6 +72,14 @@ dependencies {
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.2")
     // https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-test
     implementation("org.jetbrains.kotlin:kotlin-test:1.8.0")
+
+    // LLM
+    // https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-api-jvm/
+    implementation("ai.grazie.api:api-gateway-api-jvm:0.2.162")
+    // https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-client-jvm/
+    implementation("ai.grazie.api:api-gateway-client-jvm:0.2.161")
+    // https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-ktor-jvm/
+    implementation("ai.grazie.client:client-ktor:0.2.161")
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
