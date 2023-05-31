@@ -1,19 +1,51 @@
 package org.jetbrains.research.testgenie.llm
 
+import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
+import ai.grazie.client.common.SuspendableHTTPClient
+import ai.grazie.client.ktor.GrazieKtorHTTPClient
+import ai.grazie.model.auth.v5.AuthData
+import ai.grazie.model.cloud.AuthType
+import ai.grazie.model.llm.chat.LLMChat
+import ai.grazie.model.llm.profile.OpenAIProfileIDs
+import com.intellij.openapi.diagnostic.Logger
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
+
 
 class LLMRequest {
-    val url = "https://all.egn.llm.stgn.grazie.aws.intellij.net"
-//    private val grazieToken = TODO(Read comments in the request())
+    private val url = "https://api.app.stgn.grazie.aws.intellij.net"
+    private val grazieToken = SettingsArguments.grazieUserToken()
 
+    private val logger: Logger = Logger.getInstance(this.javaClass)
 
+    fun request(prompt: String): String {
+        // Prepare Authentication Data
+        val authData = AuthData(
+            token = grazieToken,
+            originalUserToken = grazieToken,
+            originalServiceToken = null,
+            grazieAgent = null
+        )
 
-    fun request(prompt: String) {
+        // Initiate the client
+        val client = SuspendableAPIGatewayClient(
+            serverUrl = url,
+            authType = AuthType.User,
+            httpClient = SuspendableHTTPClient.WithV5(GrazieKtorHTTPClient.Default, authData)
+        )
 
-        // TODO: We need to send request via Grazie PlayGround: https://play.stgn.grazie.ai/chat.
-        //  The temporary token for testing is available in the playground page.
-        //  For sending request we should either use
-        //  1) Grazie API (https://jetbrains.team/p/grazi/packages/maven/grazie-platform-public/ai.grazie.api/api-gateway-api-jvm?v=0.2.162&tab=overview) and in general grazie platform code (public maven packages: https://jetbrains.team/p/grazi/packages/maven/grazie-platform-public; private packages: https://jetbrains.team/p/grazi/packages/maven/grazie-platform )
-        //  2) check how they did it in LLM_for_code project
+        // Prepare the chat
+        val llmChat = LLMChat.Builder(prompt).build()
+
+        // Send Request to LLM
+        logger.info("Sending Request ...")
+        val response = runBlocking {
+            // ToDo we need to find a way to monitor the progress of test generation
+            client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).toList().joinToString("")
+        }
+        logger.info("The generated tests are: \n $response")
+
+        return response
     }
 
 }
