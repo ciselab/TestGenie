@@ -1,4 +1,4 @@
-package org.jetbrains.research.testgenie.llm
+package org.jetbrains.research.testgenie.llm.generation
 
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.client.common.SuspendableHTTPClient
@@ -6,10 +6,13 @@ import ai.grazie.client.ktor.GrazieKtorHTTPClient
 import ai.grazie.model.auth.v5.AuthData
 import ai.grazie.model.cloud.AuthType
 import ai.grazie.model.llm.chat.LLMChat
+import ai.grazie.model.llm.chat.LLMChatRole
 import ai.grazie.model.llm.profile.OpenAIProfileIDs
 import com.intellij.openapi.diagnostic.Logger
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.research.testgenie.llm.SettingsArguments
+import org.jetbrains.research.testgenie.llm.test.TestSuiteGeneratedByLLM
 
 
 class LLMRequest {
@@ -18,7 +21,7 @@ class LLMRequest {
 
     private val logger: Logger = Logger.getInstance(this.javaClass)
 
-    fun request(prompt: String): String {
+    fun request(prompt: String): TestSuiteGeneratedByLLM {
         // Prepare Authentication Data
         val authData = AuthData(
             token = grazieToken,
@@ -35,17 +38,24 @@ class LLMRequest {
         )
 
         // Prepare the chat
-        val llmChat = LLMChat.Builder(prompt).build()
+        val llmChat = LLMChat.build {
+            message(LLMChatRole.User, prompt)
+        }
+
+        // Prepare the test assembler
+        val testsAssembler = TestsAssembler()
 
         // Send Request to LLM
         logger.info("Sending Request ...")
         val response = runBlocking {
             // ToDo we need to find a way to monitor the progress of test generation
-            client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).toList().joinToString("")
+            client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect {
+                it: String -> testsAssembler.receiveResponse(it)
+            }
         }
         logger.info("The generated tests are: \n $response")
 
-        return response
+        return testsAssembler.testSuite
     }
 
 }
