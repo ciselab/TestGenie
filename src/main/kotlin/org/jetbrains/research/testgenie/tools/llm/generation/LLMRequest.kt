@@ -9,6 +9,7 @@ import ai.grazie.model.llm.chat.LLMChat
 import ai.grazie.model.llm.chat.LLMChatRole
 import ai.grazie.model.llm.profile.OpenAIProfileIDs
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
@@ -20,7 +21,7 @@ class LLMRequest {
 
     private val logger: Logger = Logger.getInstance(this.javaClass)
 
-    fun request(prompt: String): TestSuiteGeneratedByLLM {
+    fun request(prompt: String, indicator: ProgressIndicator): TestSuiteGeneratedByLLM {
         // Prepare Authentication Data
         val authData = AuthData(
             token = grazieToken,
@@ -42,7 +43,7 @@ class LLMRequest {
         }
 
         // Prepare the test assembler
-        val testsAssembler = TestsAssembler()
+        val testsAssembler = TestsAssembler(indicator = indicator)
 
         // Send Request to LLM
         logger.info("Sending Request ...")
@@ -55,6 +56,6 @@ class LLMRequest {
         }
         logger.info("The generated tests are: \n $response")
 
-        return testsAssembler.testSuite
+        return TestsAssembler.returnTestSuite()
     }
 }
