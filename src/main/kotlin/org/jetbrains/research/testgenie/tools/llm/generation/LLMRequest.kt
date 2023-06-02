@@ -1,4 +1,4 @@
-package org.jetbrains.research.testgenie.llm.generation
+package org.jetbrains.research.testgenie.tools.llm.generation
 
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.client.common.SuspendableHTTPClient
@@ -11,8 +11,8 @@ import ai.grazie.model.llm.profile.OpenAIProfileIDs
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.research.testgenie.llm.SettingsArguments
-import org.jetbrains.research.testgenie.llm.test.TestSuiteGeneratedByLLM
+import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
+import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
 
 
 class LLMRequest {
