@@ -1,4 +1,4 @@
-package org.jetbrains.research.testgenie.llm.generation
+package org.jetbrains.research.testgenie.tools.llm.generation
 
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.client.common.SuspendableHTTPClient
@@ -11,9 +11,8 @@ import ai.grazie.model.llm.profile.OpenAIProfileIDs
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.research.testgenie.llm.SettingsArguments
-import org.jetbrains.research.testgenie.llm.test.TestSuiteGeneratedByLLM
-
+import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
+import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
 
 class LLMRequest {
     private val url = "https://api.app.stgn.grazie.aws.intellij.net"
@@ -50,12 +49,12 @@ class LLMRequest {
         val response = runBlocking {
             // ToDo we need to find a way to monitor the progress of test generation
             client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect {
-                it: String -> testsAssembler.receiveResponse(it)
+                    it: String ->
+                testsAssembler.receiveResponse(it)
             }
         }
         logger.info("The generated tests are: \n $response")
 
         return testsAssembler.testSuite
     }
-
 }
