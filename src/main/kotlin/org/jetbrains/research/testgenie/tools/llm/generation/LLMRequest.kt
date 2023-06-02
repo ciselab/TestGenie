@@ -48,7 +48,6 @@ class LLMRequest {
         // Send Request to LLM
         logger.info("Sending Request ...")
         val response = runBlocking {
-            // ToDo we need to find a way to monitor the progress of test generation
             client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect {
                     it: String ->
                 testsAssembler.receiveResponse(it)
