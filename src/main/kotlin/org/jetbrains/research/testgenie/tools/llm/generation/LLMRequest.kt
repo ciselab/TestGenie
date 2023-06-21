@@ -27,14 +27,14 @@ class LLMRequest {
             token = grazieToken,
             originalUserToken = grazieToken,
             originalServiceToken = null,
-            grazieAgent = null
+            grazieAgent = null,
         )
 
         // Initiate the client
         val client = SuspendableAPIGatewayClient(
             serverUrl = url,
             authType = AuthType.User,
-            httpClient = SuspendableHTTPClient.WithV5(GrazieKtorHTTPClient.Default, authData)
+            httpClient = SuspendableHTTPClient.WithV5(GrazieKtorHTTPClient.Default, authData),
         )
 
         // Prepare the chat
@@ -48,8 +48,7 @@ class LLMRequest {
         // Send Request to LLM
         logger.info("Sending Request ...")
         val response = runBlocking {
-            client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect {
-                    it: String ->
+            client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect { it: String ->
                 testsAssembler.receiveResponse(it)
             }
         }
