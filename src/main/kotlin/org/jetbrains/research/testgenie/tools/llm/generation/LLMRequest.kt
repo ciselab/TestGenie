@@ -21,7 +21,7 @@ class LLMRequest {
 
     private val logger: Logger = Logger.getInstance(this.javaClass)
 
-    fun request(prompt: String, indicator: ProgressIndicator): TestSuiteGeneratedByLLM {
+    fun request(prompt: String, indicator: ProgressIndicator, packageName: String): TestSuiteGeneratedByLLM {
         // Prepare Authentication Data
         val authData = AuthData(
             token = grazieToken,
@@ -54,6 +54,6 @@ class LLMRequest {
         }
         logger.info("The generated tests are: \n $response")
 
-        return TestsAssembler.returnTestSuite()
+        return TestsAssembler.returnTestSuite(packageName)
     }
 }
