@@ -34,6 +34,9 @@ dependencies {
     implementation(files("lib/evosuite-$thunderdomeVersion.jar"))
     implementation(files("lib/standalone-runtime.jar"))
     implementation(files("lib/jacocoagent.jar"))
+    implementation(files("lib/jacococli.jar"))
+    implementation(files("lib/mockito-core-5.0.0.jar"))
+    implementation(files("lib/JUnitRunner-1.0.jar"))
 
     // validation dependencies
     // https://mvnrepository.com/artifact/junit/junit
