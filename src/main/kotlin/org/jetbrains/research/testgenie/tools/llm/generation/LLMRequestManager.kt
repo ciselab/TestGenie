@@ -6,6 +6,7 @@ import ai.grazie.client.ktor.GrazieKtorHTTPClient
 import ai.grazie.model.auth.v5.AuthData
 import ai.grazie.model.cloud.AuthType
 import ai.grazie.model.llm.chat.LLMChat
+import ai.grazie.model.llm.chat.LLMChatMessage
 import ai.grazie.model.llm.chat.LLMChatRole
 import ai.grazie.model.llm.profile.OpenAIProfileIDs
 import com.intellij.openapi.diagnostic.Logger
@@ -15,9 +16,11 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
 import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
 
-class LLMRequest {
+class LLMRequestManager {
     private val url = "https://api.app.stgn.grazie.aws.intellij.net"
     private val grazieToken = SettingsArguments.grazieUserToken()
+
+    private val messagesHistory: MutableList<LLMChatMessage> = mutableListOf()
 
     private val logger: Logger = Logger.getInstance(this.javaClass)
 
@@ -38,22 +41,33 @@ class LLMRequest {
         )
 
         // Prepare the chat
-        val llmChat = LLMChat.build {
-            message(LLMChatRole.User, prompt)
-        }
+        val llmChat = generateChat(prompt)
 
         // Prepare the test assembler
         val testsAssembler = TestsAssembler(indicator = indicator)
 
         // Send Request to LLM
         logger.info("Sending Request ...")
-        val response = runBlocking {
+        runBlocking {
             client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect { it: String ->
                 testsAssembler.receiveResponse(it)
             }
         }
-        logger.info("The generated tests are: \n $response")
+
+        messagesHistory.add(LLMChatMessage(LLMChatRole.Assistant,testsAssembler.getLLMResponse()))
 
         return TestsAssembler.returnTestSuite(packageName)
+    }
+
+    private fun generateChat(prompt: String): LLMChat {
+        // add the new prompt to mutableMessages
+        messagesHistory.add(LLMChatMessage(LLMChatRole.User,prompt))
+
+        return LLMChat.build {
+            messagesHistory.forEach {message ->
+                message(message.role,message.text)
+            }
+        }
+
     }
 }
