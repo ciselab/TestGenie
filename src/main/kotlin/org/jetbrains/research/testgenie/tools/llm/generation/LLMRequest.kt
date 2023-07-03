@@ -54,6 +54,6 @@ class LLMRequest {
         }
         logger.info("The generated tests are: \n $response")
 
-        return TestsAssembler.returnTestSuite(packageName)
+        return TestsAssembler.returnTestSuite(packageName).reformat()
     }
 }
