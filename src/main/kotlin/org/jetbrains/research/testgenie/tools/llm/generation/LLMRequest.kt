@@ -5,14 +5,17 @@ import ai.grazie.client.common.SuspendableHTTPClient
 import ai.grazie.client.ktor.GrazieKtorHTTPClient
 import ai.grazie.model.auth.v5.AuthData
 import ai.grazie.model.cloud.AuthType
+import ai.grazie.model.cloud.exceptions.HTTPStatusException
 import ai.grazie.model.llm.chat.LLMChat
 import ai.grazie.model.llm.chat.LLMChatRole
 import ai.grazie.model.llm.profile.OpenAIProfileIDs
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
-import kotlinx.coroutines.flow.collect
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.research.testgenie.TestGenieBundle
 import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
+import org.jetbrains.research.testgenie.tools.llm.error.LLMErrorManager
 import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
 
 class LLMRequest {
@@ -21,7 +24,7 @@ class LLMRequest {
 
     private val logger: Logger = Logger.getInstance(this.javaClass)
 
-    fun request(prompt: String, indicator: ProgressIndicator, packageName: String): TestSuiteGeneratedByLLM {
+    fun request(prompt: String, indicator: ProgressIndicator, packageName: String, project: Project, llmErrorManager: LLMErrorManager): TestSuiteGeneratedByLLM? {
         // Prepare Authentication Data
         val authData = AuthData(
             token = grazieToken,
@@ -48,11 +51,22 @@ class LLMRequest {
         // Send Request to LLM
         logger.info("Sending Request ...")
         val response = runBlocking {
-            client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect { it: String ->
-                testsAssembler.receiveResponse(it)
+            try {
+                client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect { it: String ->
+                    testsAssembler.receiveResponse(it)
+                }
+            } catch (e: HTTPStatusException) {
+                when (e.status) {
+                    401 -> llmErrorManager.displayWarning(TestGenieBundle.message("incorrectToken"), project)
+                    500 -> llmErrorManager.displayWarning(TestGenieBundle.message("serverProblems"), project)
+                    else -> llmErrorManager.display(llmErrorManager.createRequestErrorMessage(e.status), project)
+                }
+                null
             }
         }
         logger.info("The generated tests are: \n $response")
+
+        response ?: return null
 
         return TestsAssembler.returnTestSuite(packageName).reformat()
     }
