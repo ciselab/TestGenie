@@ -60,6 +60,7 @@ class LLMRequestManager {
                 when (e.status) {
                     401 -> llmErrorManager.warningProcess(TestGenieBundle.message("incorrectToken"), project)
                     500 -> llmErrorManager.warningProcess(TestGenieBundle.message("serverProblems"), project)
+                    400 -> llmErrorManager.warningProcess(TestGenieBundle.message("tooLongPrompt"), project)
                     else -> llmErrorManager.errorProcess(llmErrorManager.createRequestErrorMessage(e.status), project)
                 }
                 null
