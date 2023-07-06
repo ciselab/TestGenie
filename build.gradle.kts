@@ -14,7 +14,7 @@ plugins {
     // Kotlin support
     id("org.jetbrains.kotlin.jvm") version "1.7.21"
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.12.0"
+    id("org.jetbrains.intellij") version "1.13.3"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "1.3.1"
     // Gradle Qodana Plugin
@@ -45,6 +45,9 @@ dependencies {
     implementation("org.jacoco:org.jacoco.core:0.8.8")
     // https://mvnrepository.com/artifact/com.github.javaparser/javaparser-core
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.2")
+
+    // https://gitlab.com/mvysny/konsume-xml
+    implementation("com.gitlab.mvysny.konsume-xml:konsume-xml:1.0")
 
     // From the jetbrains repository
     testImplementation("com.intellij.remoterobot:remote-robot:0.11.13")
