@@ -19,12 +19,11 @@ import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
 import org.jetbrains.research.testgenie.tools.llm.error.LLMErrorManager
 import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
 
-class LLMRequest {
+class LLMRequestManager {
     private val url = "https://api.app.stgn.grazie.aws.intellij.net"
     private val grazieToken = SettingsArguments.grazieUserToken()
 
     private val logger: Logger = Logger.getInstance(this.javaClass)
-
 
     // Prepare Authentication Data
     private val authData = AuthData(
@@ -70,10 +69,10 @@ class LLMRequest {
         // save the full response in the chat history
         val response = testsAssembler.rawText
         logger.debug("The full response: \n $response")
-        chatHistory.add(LLMChatMessage(LLMChatRole.Assistant,response))
+        chatHistory.add(LLMChatMessage(LLMChatRole.Assistant, response))
 
         // check if response is empty
-        if (response.isEmpty() || response.isBlank()){
+        if (response.isEmpty() || response.isBlank()) {
             indicator.text = "LLM returned empty response. Trying again!"
             return null
         }
@@ -87,7 +86,7 @@ class LLMRequest {
         // build and return LLMChat
         return LLMChat.build {
             chatHistory.forEach {
-                message(it.role,it.text)
+                message(it.role, it.text)
             }
         }
     }
