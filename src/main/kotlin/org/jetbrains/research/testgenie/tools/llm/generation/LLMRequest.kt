@@ -57,9 +57,9 @@ class LLMRequest {
                 }
             } catch (e: HTTPStatusException) {
                 when (e.status) {
-                    401 -> llmErrorManager.displayWarning(TestGenieBundle.message("incorrectToken"), project)
-                    500 -> llmErrorManager.displayWarning(TestGenieBundle.message("serverProblems"), project)
-                    else -> llmErrorManager.display(llmErrorManager.createRequestErrorMessage(e.status), project)
+                    401 -> llmErrorManager.warningProcess(TestGenieBundle.message("incorrectToken"), project)
+                    500 -> llmErrorManager.warningProcess(TestGenieBundle.message("serverProblems"), project)
+                    else -> llmErrorManager.errorProcess(llmErrorManager.createRequestErrorMessage(e.status), project)
                 }
                 null
             }
