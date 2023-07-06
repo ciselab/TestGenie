@@ -7,6 +7,7 @@ import ai.grazie.model.auth.v5.AuthData
 import ai.grazie.model.cloud.AuthType
 import ai.grazie.model.cloud.exceptions.HTTPStatusException
 import ai.grazie.model.llm.chat.LLMChat
+import ai.grazie.model.llm.chat.LLMChatMessage
 import ai.grazie.model.llm.chat.LLMChatRole
 import ai.grazie.model.llm.profile.OpenAIProfileIDs
 import com.intellij.openapi.diagnostic.Logger
@@ -24,33 +25,34 @@ class LLMRequest {
 
     private val logger: Logger = Logger.getInstance(this.javaClass)
 
+
+    // Prepare Authentication Data
+    private val authData = AuthData(
+        token = grazieToken,
+        originalUserToken = grazieToken,
+        originalServiceToken = null,
+        grazieAgent = null,
+    )
+
+    // Initiate the client
+    private val client = SuspendableAPIGatewayClient(
+        serverUrl = url,
+        authType = AuthType.User,
+        httpClient = SuspendableHTTPClient.WithV5(GrazieKtorHTTPClient.Default, authData),
+    )
+
+    private val chatHistory = mutableListOf<LLMChatMessage>()
+
     fun request(prompt: String, indicator: ProgressIndicator, packageName: String, project: Project, llmErrorManager: LLMErrorManager): TestSuiteGeneratedByLLM? {
-        // Prepare Authentication Data
-        val authData = AuthData(
-            token = grazieToken,
-            originalUserToken = grazieToken,
-            originalServiceToken = null,
-            grazieAgent = null,
-        )
-
-        // Initiate the client
-        val client = SuspendableAPIGatewayClient(
-            serverUrl = url,
-            authType = AuthType.User,
-            httpClient = SuspendableHTTPClient.WithV5(GrazieKtorHTTPClient.Default, authData),
-        )
-
         // Prepare the chat
-        val llmChat = LLMChat.build {
-            message(LLMChatRole.User, prompt)
-        }
+        val llmChat = buildChat(prompt)
 
         // Prepare the test assembler
         val testsAssembler = TestsAssembler(indicator = indicator)
 
         // Send Request to LLM
         logger.info("Sending Request ...")
-        val response = runBlocking {
+        runBlocking {
             try {
                 client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect { it: String ->
                     testsAssembler.receiveResponse(it)
@@ -64,10 +66,29 @@ class LLMRequest {
                 null
             }
         }
-        logger.info("The generated tests are: \n $response")
 
-        response ?: return null
+        // save the full response in the chat history
+        val response = testsAssembler.rawText
+        logger.debug("The full response: \n $response")
+        chatHistory.add(LLMChatMessage(LLMChatRole.Assistant,response))
+
+        // check if response is empty
+        if (response.isEmpty() || response.isBlank()){
+            indicator.text = "LLM returned empty response. Trying again!"
+            return null
+        }
 
         return testsAssembler.returnTestSuite(packageName).reformat()
+    }
+
+    private fun buildChat(prompt: String): LLMChat {
+        // add new prompt to chat history
+        chatHistory.add(LLMChatMessage(LLMChatRole.User, prompt))
+        // build and return LLMChat
+        return LLMChat.build {
+            chatHistory.forEach {
+                message(it.role,it.text)
+            }
+        }
     }
 }
