@@ -68,6 +68,6 @@ class LLMRequest {
 
         response ?: return null
 
-        return TestsAssembler.returnTestSuite(packageName).reformat()
+        return testsAssembler.returnTestSuite(packageName).reformat()
     }
 }
