@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.research.testgenie.TestGenieBundle
+import org.jetbrains.research.testgenie.tools.indicatorIsCanceled
 import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
 import org.jetbrains.research.testgenie.tools.llm.error.LLMErrorManager
 import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
@@ -47,7 +48,7 @@ class LLMRequestManager {
         val llmChat = buildChat(prompt)
 
         // Prepare the test assembler
-        val testsAssembler = TestsAssembler(indicator = indicator)
+        val testsAssembler = TestsAssembler(project, indicator)
 
         // Send Request to LLM
         logger.info("Sending Request ...")
@@ -66,6 +67,8 @@ class LLMRequestManager {
                 null
             }
         }
+
+        if (indicatorIsCanceled(project, indicator)) return null
 
         // save the full response in the chat history
         val response = testsAssembler.rawText
