@@ -153,7 +153,7 @@ tasks {
                     throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
                 }
                 subList(indexOf(start) + 1, indexOf(end))
-            }.joinToString("\n").run { markdownToHTML(this) }
+            }.joinToString("\n").run { markdownToHTML(this) },
         )
 
         // Get the latest available change notes from the changelog file
@@ -162,7 +162,7 @@ tasks {
                 changelog.run {
                     getOrNull(properties("pluginVersion")) ?: getLatest()
                 }.toHTML()
-            }
+            },
         )
     }
 
@@ -244,7 +244,7 @@ abstract class UpdateEvoSuite : DefaultTask() {
         }
 
         logger.info("Latest evosuite jar successfully downloaded, cleaning up lib directory")
-        libDir.listFiles()?.filter { !it.name.matches(Regex(jarName)) }?.map {
+        libDir.listFiles()?.filter { !it.name.matches(Regex(jarName)) && it.name.contains("evosuite") }?.map {
             if (it.delete()) {
                 logger.info("Deleted outdated release ${it.name}")
             }
