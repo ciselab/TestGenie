@@ -15,7 +15,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.research.testgenie.TestGenieBundle
-import org.jetbrains.research.testgenie.tools.indicatorIsCanceled
+import org.jetbrains.research.testgenie.tools.processStopped
 import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
 import org.jetbrains.research.testgenie.tools.llm.error.LLMErrorManager
 import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
@@ -67,19 +67,13 @@ class LLMRequestManager {
                 null
             }
         }
-
-        if (indicatorIsCanceled(project, indicator)) return null
-
         // save the full response in the chat history
         val response = testsAssembler.rawText
         logger.debug("The full response: \n $response")
         chatHistory.add(LLMChatMessage(LLMChatRole.Assistant, response))
 
         // check if response is empty
-        if (response.isEmpty() || response.isBlank()) {
-            indicator.text = "LLM returned empty response. Trying again!"
-            return null
-        }
+        if (response.isEmpty() || response.isBlank()) return null
 
         return testsAssembler.returnTestSuite(packageName).reformat()
     }
