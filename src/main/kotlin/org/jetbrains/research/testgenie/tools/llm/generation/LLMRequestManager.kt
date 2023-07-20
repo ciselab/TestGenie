@@ -19,6 +19,9 @@ import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
 import org.jetbrains.research.testgenie.tools.llm.error.LLMErrorManager
 import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
 
+/**
+ * This class represents a manager for making requests to the LLM (Live Learning Model).
+ */
 class LLMRequestManager {
     private val url = "https://api.app.stgn.grazie.aws.intellij.net"
     private val grazieToken = SettingsArguments.grazieUserToken()
@@ -42,6 +45,16 @@ class LLMRequestManager {
 
     private val chatHistory = mutableListOf<LLMChatMessage>()
 
+    /**
+     * Sends a request to LLM with the given prompt and returns the generated TestSuite.
+     *
+     * @param prompt the prompt to send to LLM
+     * @param indicator the progress indicator to show progress during the request
+     * @param packageName the name of the package for the generated TestSuite
+     * @param project the project associated with the request
+     * @param llmErrorManager the error manager to handle errors during the request
+     * @return the generated TestSuite, or null if the response is empty or blank
+     */
     fun request(prompt: String, indicator: ProgressIndicator, packageName: String, project: Project, llmErrorManager: LLMErrorManager): TestSuiteGeneratedByLLM? {
         // Prepare the chat
         val llmChat = buildChat(prompt)
@@ -77,6 +90,13 @@ class LLMRequestManager {
         return testsAssembler.returnTestSuite(packageName).reformat()
     }
 
+    /**
+     * Builds a new LLMChat instance using the given prompt.
+     * Adds the prompt to the chat history and then constructs the LLMChat object with the chat history.
+     *
+     * @param prompt The prompt for the user.
+     * @return The newly created LLMChat object.
+     */
     private fun buildChat(prompt: String): LLMChat {
         // add new prompt to chat history
         chatHistory.add(LLMChatMessage(LLMChatRole.User, prompt))
