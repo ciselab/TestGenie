@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.research.testgenie.TestGenieBundle
-import org.jetbrains.research.testgenie.tools.processStopped
 import org.jetbrains.research.testgenie.tools.llm.SettingsArguments
 import org.jetbrains.research.testgenie.tools.llm.error.LLMErrorManager
 import org.jetbrains.research.testgenie.tools.llm.test.TestSuiteGeneratedByLLM
