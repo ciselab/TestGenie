@@ -244,7 +244,7 @@ abstract class UpdateEvoSuite : DefaultTask() {
         }
 
         logger.info("Latest evosuite jar successfully downloaded, cleaning up lib directory")
-        libDir.listFiles()?.filter { !it.name.matches(Regex(jarName)) }?.map {
+        libDir.listFiles()?.filter { !it.name.matches(Regex(jarName)) && it.name.contains("evosuite") }?.map {
             if (it.delete()) {
                 logger.info("Deleted outdated release ${it.name}")
             }
