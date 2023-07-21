@@ -26,7 +26,7 @@ class LLMRequestManager {
     private val url = "https://api.app.stgn.grazie.aws.intellij.net"
     private val grazieToken = SettingsArguments.grazieUserToken()
 
-    private val logger: Logger = Logger.getInstance(this.javaClass)
+    private val log: Logger = Logger.getInstance(this.javaClass)
 
     // Prepare Authentication Data
     private val authData = AuthData(
@@ -63,7 +63,7 @@ class LLMRequestManager {
         val testsAssembler = TestsAssembler(project, indicator)
 
         // Send Request to LLM
-        logger.info("Sending Request ...")
+        log.info("Sending Request ...")
         runBlocking {
             try {
                 client.llm().chat(llmChat, OpenAIProfileIDs.GPT4).collect { it: String ->
@@ -81,7 +81,7 @@ class LLMRequestManager {
         }
         // save the full response in the chat history
         val response = testsAssembler.rawText
-        logger.debug("The full response: \n $response")
+        log.debug("The full response: \n $response")
         chatHistory.add(LLMChatMessage(LLMChatRole.Assistant, response))
 
         // check if response is empty
