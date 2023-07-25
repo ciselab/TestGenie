@@ -2,6 +2,9 @@ import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileOutputStream
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.zip.ZipInputStream
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -36,7 +39,7 @@ dependencies {
     implementation(files("lib/jacocoagent.jar"))
     implementation(files("lib/jacococli.jar"))
     implementation(files("lib/mockito-core-5.0.0.jar"))
-    implementation(files("lib/JUnitRunner-1.0.jar"))
+    implementation(files("lib/JUnitRunner.jar"))
 
     // validation dependencies
     // https://mvnrepository.com/artifact/junit/junit
@@ -113,8 +116,10 @@ qodana {
 }
 
 tasks {
+
     compileKotlin {
         dependsOn("updateEvosuite")
+        dependsOn("copyJUnitRunnerLib")
     }
     // Set the JVM compatibility versions
     properties("javaVersion").let {
@@ -196,6 +201,27 @@ tasks {
     }
 }
 
+abstract class CopyJUnitRunnerLib : DefaultTask() {
+
+    @TaskAction
+    fun execute() {
+        val libName = "JUnitRunner.jar"
+        val libSrcDir = "JUnitRunner${File.separator}build${File.separator}libs${File.separator}"
+        val libDestDir = "lib${File.separator}"
+
+        val libSrcPath = Paths.get("$libSrcDir$libName")
+        val libDestPath = Paths.get("$libDestDir$libName")
+
+        // check if the jar file exists
+        if (!libSrcPath.toFile().exists()) {
+            throw IllegalStateException("$libSrcPath does not exist")
+        }
+
+        // move the lib
+        Files.move(libSrcPath, libDestPath, StandardCopyOption.REPLACE_EXISTING)
+    }
+}
+
 /**
  * Custom gradle task used to source the custom evosuite binary
  * required for the build process. It functions as follows:
@@ -254,4 +280,17 @@ abstract class UpdateEvoSuite : DefaultTask() {
 
 tasks.register<UpdateEvoSuite>("updateEvosuite") {
     version = thunderdomeVersion
+}
+
+tasks.register<Copy>("copyJUnitRunnerLib") {
+    dependsOn(":JUnitRunner:jar")
+
+    val libName = "JUnitRunner.jar"
+    val libSrcDir =
+        "${project.projectDir}${File.separator}JUnitRunner${File.separator}build${File.separator}libs${File.separator}"
+    val libDestDir = "${project.projectDir}${File.separator}lib${File.separator}"
+    val libSrcPath = Paths.get("$libSrcDir$libName")
+
+    from(libSrcPath)
+    into(libDestDir)
 }
