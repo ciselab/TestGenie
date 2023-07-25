@@ -4,6 +4,11 @@ plugins {
 
 group = "org.jetbrains.research"
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 repositories {
     mavenCentral()
 }
