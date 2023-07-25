@@ -2,11 +2,10 @@ import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileOutputStream
 import java.net.URL
-import java.util.zip.ZipInputStream
-
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.zip.ZipInputStream
 
 fun properties(key: String) = project.findProperty(key).toString()
 
@@ -202,25 +201,24 @@ tasks {
     }
 }
 
-abstract class CopyJUnitRunnerLib: DefaultTask(){
-
+abstract class CopyJUnitRunnerLib : DefaultTask() {
 
     @TaskAction
-    fun execute(){
+    fun execute() {
         val libName = "JUnitRunner.jar"
         val libSrcDir = "JUnitRunner${File.separator}build${File.separator}libs${File.separator}"
         val libDestDir = "lib${File.separator}"
 
-        val libSrcPath =  Paths.get("$libSrcDir$libName")
-        val libDestPath =  Paths.get("$libDestDir$libName")
+        val libSrcPath = Paths.get("$libSrcDir$libName")
+        val libDestPath = Paths.get("$libDestDir$libName")
 
         // check if the jar file exists
-        if(!libSrcPath.toFile().exists()){
+        if (!libSrcPath.toFile().exists()) {
             throw IllegalStateException("$libSrcPath does not exist")
         }
 
         // move the lib
-        Files.move(libSrcPath,libDestPath,  StandardCopyOption.REPLACE_EXISTING)
+        Files.move(libSrcPath, libDestPath, StandardCopyOption.REPLACE_EXISTING)
     }
 }
 
@@ -284,14 +282,14 @@ tasks.register<UpdateEvoSuite>("updateEvosuite") {
     version = thunderdomeVersion
 }
 
-
 tasks.register<Copy>("copyJUnitRunnerLib") {
     dependsOn(":JUnitRunner:jar")
 
     val libName = "JUnitRunner.jar"
-    val libSrcDir = "${project.projectDir}${File.separator}JUnitRunner${File.separator}build${File.separator}libs${File.separator}"
+    val libSrcDir =
+        "${project.projectDir}${File.separator}JUnitRunner${File.separator}build${File.separator}libs${File.separator}"
     val libDestDir = "${project.projectDir}${File.separator}lib${File.separator}"
-    val libSrcPath =  Paths.get("$libSrcDir$libName")
+    val libSrcPath = Paths.get("$libSrcDir$libName")
 
     from(libSrcPath)
     into(libDestDir)
