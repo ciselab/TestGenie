@@ -2,6 +2,9 @@ import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileOutputStream
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.zip.ZipInputStream
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -12,11 +15,11 @@ plugins {
     // Java support
     id("java")
     // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.7.21"
+    id("org.jetbrains.kotlin.jvm") version "1.9.0"
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.13.3"
+    id("org.jetbrains.intellij") version "1.15.0"
     // Gradle Changelog Plugin
-    id("org.jetbrains.changelog") version "1.3.1"
+    id("org.jetbrains.changelog") version "2.1.2"
     // Gradle Qodana Plugin
     id("org.jetbrains.qodana") version "0.1.13"
 }
@@ -27,12 +30,16 @@ version = properties("pluginVersion")
 repositories {
     mavenCentral()
     maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+    maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public")
 }
 
 dependencies {
     implementation(files("lib/evosuite-$thunderdomeVersion.jar"))
     implementation(files("lib/standalone-runtime.jar"))
     implementation(files("lib/jacocoagent.jar"))
+    implementation(files("lib/jacococli.jar"))
+    implementation(files("lib/mockito-core-5.0.0.jar"))
+    implementation(files("lib/JUnitRunner.jar"))
 
     // validation dependencies
     // https://mvnrepository.com/artifact/junit/junit
@@ -41,6 +48,9 @@ dependencies {
     implementation("org.jacoco:org.jacoco.core:0.8.8")
     // https://mvnrepository.com/artifact/com.github.javaparser/javaparser-core
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.2")
+
+    // https://gitlab.com/mvysny/konsume-xml
+    implementation("com.gitlab.mvysny.konsume-xml:konsume-xml:1.0")
 
     // From the jetbrains repository
     testImplementation("com.intellij.remoterobot:remote-robot:0.11.13")
@@ -71,6 +81,14 @@ dependencies {
     implementation("com.github.javaparser:javaparser-symbol-solver-core:3.24.2")
     // https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-test
     implementation("org.jetbrains.kotlin:kotlin-test:1.8.0")
+
+    // LLM
+    // https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-api-jvm/
+    implementation("ai.grazie.api:api-gateway-api-jvm:0.2.162")
+    // https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/api/api-gateway-client-jvm/
+    implementation("ai.grazie.api:api-gateway-client-jvm:0.2.161")
+    // https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-ktor-jvm/
+    implementation("ai.grazie.client:client-ktor:0.2.161")
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
@@ -98,8 +116,10 @@ qodana {
 }
 
 tasks {
+
     compileKotlin {
         dependsOn("updateEvosuite")
+        dependsOn("copyJUnitRunnerLib")
     }
     // Set the JVM compatibility versions
     properties("javaVersion").let {
@@ -138,7 +158,7 @@ tasks {
                     throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
                 }
                 subList(indexOf(start) + 1, indexOf(end))
-            }.joinToString("\n").run { markdownToHTML(this) }
+            }.joinToString("\n").run { markdownToHTML(this) },
         )
 
         // Get the latest available change notes from the changelog file
@@ -147,7 +167,7 @@ tasks {
                 changelog.run {
                     getOrNull(properties("pluginVersion")) ?: getLatest()
                 }.toHTML()
-            }
+            },
         )
     }
 
@@ -178,6 +198,27 @@ tasks {
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
+    }
+}
+
+abstract class CopyJUnitRunnerLib : DefaultTask() {
+
+    @TaskAction
+    fun execute() {
+        val libName = "JUnitRunner.jar"
+        val libSrcDir = "JUnitRunner${File.separator}build${File.separator}libs${File.separator}"
+        val libDestDir = "lib${File.separator}"
+
+        val libSrcPath = Paths.get("$libSrcDir$libName")
+        val libDestPath = Paths.get("$libDestDir$libName")
+
+        // check if the jar file exists
+        if (!libSrcPath.toFile().exists()) {
+            throw IllegalStateException("$libSrcPath does not exist")
+        }
+
+        // move the lib
+        Files.move(libSrcPath, libDestPath, StandardCopyOption.REPLACE_EXISTING)
     }
 }
 
@@ -229,7 +270,7 @@ abstract class UpdateEvoSuite : DefaultTask() {
         }
 
         logger.info("Latest evosuite jar successfully downloaded, cleaning up lib directory")
-        libDir.listFiles()?.filter { !it.name.matches(Regex(jarName)) }?.map {
+        libDir.listFiles()?.filter { !it.name.matches(Regex(jarName)) && it.name.contains("evosuite") }?.map {
             if (it.delete()) {
                 logger.info("Deleted outdated release ${it.name}")
             }
@@ -239,4 +280,17 @@ abstract class UpdateEvoSuite : DefaultTask() {
 
 tasks.register<UpdateEvoSuite>("updateEvosuite") {
     version = thunderdomeVersion
+}
+
+tasks.register<Copy>("copyJUnitRunnerLib") {
+    dependsOn(":JUnitRunner:jar")
+
+    val libName = "JUnitRunner.jar"
+    val libSrcDir =
+        "${project.projectDir}${File.separator}JUnitRunner${File.separator}build${File.separator}libs${File.separator}"
+    val libDestDir = "${project.projectDir}${File.separator}lib${File.separator}"
+    val libSrcPath = Paths.get("$libSrcDir$libName")
+
+    from(libSrcPath)
+    into(libDestDir)
 }
